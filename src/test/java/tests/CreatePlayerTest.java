@@ -7,6 +7,7 @@ import model.PlayerIdRequest;
 import model.PlayerResponse;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
 import providers.CreatePlayerDataProviders;
 
 import java.util.ArrayList;
@@ -106,35 +107,32 @@ public class CreatePlayerTest extends BaseApiTest {
             }
         }
     }
-    //BUG - most fields return null in response
-    @Test(description = "createPlayer response contains same input data + id, status 200")
-    public void createPlayerAndVerifyRespondBody() {
+    @Test(description = "Create admin response contains same input data + id, status 200, all mismatches reported")
+    public void createAdminAndVerifyRespondBody() {
         CreatePlayerParams params = new CreatePlayerParams(
                 "25",
                 "male",
                 RandomDataUtil.randomLogin(),
                 RandomDataUtil.randomPassword(),
-                "user",
+                "admin",
                 RandomDataUtil.randomScreenName()
         );
         Response response = client.createPlayer(Editor.SUPERVISOR.getValue(), params);
-        assertNotNull(response);
+
         assertEquals(response.getStatusCode(), 200, "Expected 200");
 
         PlayerResponse actual = response.as(PlayerResponse.class);
         assertNotNull(actual.getId(), "id should be present");
         createdPlayerIds.add(actual.getId());
 
-        PlayerResponse expected = new PlayerResponse(
-                actual.getId(),
-                params.getAge(),
-                params.getGender(),
-                params.getLogin(),
-                params.getPassword(),
-                params.getRole(),
-                params.getScreenName()
-        );
-        assertEquals(actual, expected, "Response should match request data + id");
+        SoftAssert soft = new SoftAssert();
+        soft.assertEquals(actual.getAge(), params.getAge(), "age");
+        soft.assertEquals(actual.getGender(), params.getGender(), "gender");
+        soft.assertEquals(actual.getLogin(), params.getLogin(), "login");
+        soft.assertEquals(actual.getPassword(), params.getPassword(), "password");
+        soft.assertEquals(actual.getRole(), params.getRole(), "role");
+        soft.assertEquals(actual.getScreenName(), params.getScreenName(), "screenName");
+        soft.assertAll();
     }
 
 }
