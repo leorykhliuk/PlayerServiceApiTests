@@ -1,8 +1,8 @@
 package helpers;
 
-import model.CreatePlayerParams;
-import model.PlayerIdRequest;
-import model.UpdatePlayerRequest;
+import model.request.CreatePlayerParams;
+import model.request.PlayerIdRequest;
+import model.request.UpdatePlayerRequest;
 import io.restassured.response.Response;
 
 public interface IPlayerApiClient {

@@ -7,11 +7,11 @@
     </listeners>
     <test name="Player API Tests">
         <classes>
-            <class name="tests.CreatePlayerTest"/>
-            <class name="tests.DeletePlayerTest"/>
-            <class name="tests.GetPlayerByPlayerIdTest"/>
-            <class name="tests.GetAllPlayersTest"/>
-            <class name="tests.UpdatePlayerTest"/>
+            <class name="tests.createplayer.CreatePlayerTest"/>
+            <class name="tests.deleteplayer.DeletePlayerTest"/>
+            <class name="tests.getplayerbyid.GetPlayerByPlayerIdTest"/>
+            <class name="tests.getallplayers.GetAllPlayersTest"/>
+            <class name="tests.updateplayer.UpdatePlayerTest"/>
         </classes>
     </test>
 </suite>

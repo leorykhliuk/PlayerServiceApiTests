@@ -1,14 +1,15 @@
-package tests;
+package tests.createplayer;
 
 import io.restassured.response.Response;
-import model.CreatePlayerParams;
-import model.Editor;
-import model.PlayerIdRequest;
-import model.PlayerResponse;
+import model.enums.Editor;
+import model.request.CreatePlayerParams;
+import model.request.PlayerIdRequest;
+import model.response.PlayerResponse;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 import providers.CreatePlayerDataProviders;
+import tests.base.BaseApiTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,28 +31,43 @@ public class CreatePlayerTest extends BaseApiTest {
     }
 
     @Test(
-            description = "Create player with valid data: SUPERVISOR and ADMIN should return 200, USER should return 403",
-            dataProvider = "editorAndExpectedStatus",
+            description = "Create player: assert status and, when 200, full response body matches request (any editor and player role)",
+            dataProvider = "editorPlayerRoleAndExpectedStatus",
             dataProviderClass = CreatePlayerDataProviders.class
     )
-    public void createPlayerWithValidDataPerEditorReturnsExpectedStatus(String editor, int expectedStatus) {
+    public void createPlayerWithEditorAndRoleReturnsExpectedStatusAndBodyWhenSuccess(String editor, String playerRole, int expectedStatus) {
         CreatePlayerParams params = new CreatePlayerParams(
                 "25",
                 "male",
                 RandomDataUtil.randomLogin(),
                 RandomDataUtil.randomPassword(),
-                "user",
+                playerRole,
                 RandomDataUtil.randomScreenName()
         );
         Response response = client.createPlayer(editor, params);
-        assertNotNull(response);
-        int actualStatus = response.getStatusCode();
-        assertEquals(actualStatus, expectedStatus, "Editor=" + editor + " expected " + expectedStatus + " got " + actualStatus);
-        if (actualStatus == 200) {
-            Long id = response.jsonPath().getObject("id", Long.class);
-            if (id != null) {
-                createdPlayerIds.add(id);
-            }
+
+        assertNotNull(response, "Response should not be null");
+        assertEquals(response.getStatusCode(), expectedStatus,
+                "Editor=" + editor + ", role=" + playerRole + ": expected status " + expectedStatus);
+
+        if (expectedStatus == 200) {
+            PlayerResponse actual = response.as(PlayerResponse.class);
+            assertNotNull(actual.getId(), "Response should contain created player id");
+            createdPlayerIds.add(actual.getId());
+
+            SoftAssert soft = new SoftAssert();
+            soft.assertEquals(actual.getAge(), params.getAge(), "age");
+            soft.assertEquals(actual.getGender(), params.getGender(), "gender");
+            soft.assertEquals(actual.getLogin(), params.getLogin(), "login");
+            soft.assertEquals(actual.getPassword(), params.getPassword(), "password");
+            soft.assertEquals(actual.getRole(), params.getRole(), "role");
+            soft.assertEquals(actual.getScreenName(), params.getScreenName(), "screenName");
+            soft.assertAll();
+
+            Response getResponse = client.getPlayerByPlayerId(new PlayerIdRequest(actual.getId()));
+            assertEquals(getResponse.getStatusCode(), 200, "GET created player should return 200");
+            PlayerResponse fromGet = getResponse.as(PlayerResponse.class);
+            assertEquals(fromGet, actual, "GET response should match create response (player persisted)");
         }
     }
 
@@ -75,9 +91,13 @@ public class CreatePlayerTest extends BaseApiTest {
         assertEquals(actualStatus, expectedStatus, "Age=" + age + " expected " + expectedStatus + " got " + actualStatus);
 
         if (actualStatus == 200) {
-            Long id = response.jsonPath().getObject("id", Long.class);
+            PlayerResponse created = response.as(PlayerResponse.class);
+            Long id = created.getId();
             if (id != null) {
                 createdPlayerIds.add(id);
+                Response getResponse = client.getPlayerByPlayerId(new PlayerIdRequest(id));
+                assertEquals(getResponse.getStatusCode(), 200, "GET created player should return 200");
+                assertEquals(getResponse.as(PlayerResponse.class).getAge(), age, "GET response age should match created");
             }
         }
     }
@@ -101,38 +121,14 @@ public class CreatePlayerTest extends BaseApiTest {
         int actualStatus = response.getStatusCode();
         assertEquals(actualStatus, expectedStatus, "Gender=" + gender + " expected " + expectedStatus + " got " + actualStatus);
         if (actualStatus == 200) {
-            Long id = response.jsonPath().getObject("id", Long.class);
+            PlayerResponse created = response.as(PlayerResponse.class);
+            Long id = created.getId();
             if (id != null) {
                 createdPlayerIds.add(id);
+                Response getResponse = client.getPlayerByPlayerId(new PlayerIdRequest(id));
+                assertEquals(getResponse.getStatusCode(), 200, "GET created player should return 200");
+                assertEquals(getResponse.as(PlayerResponse.class).getGender(), gender, "GET response gender should match created");
             }
         }
     }
-    @Test(description = "Create admin response contains same input data + id, status 200, all mismatches reported")
-    public void createAdminAndVerifyRespondBody() {
-        CreatePlayerParams params = new CreatePlayerParams(
-                "25",
-                "male",
-                RandomDataUtil.randomLogin(),
-                RandomDataUtil.randomPassword(),
-                "admin",
-                RandomDataUtil.randomScreenName()
-        );
-        Response response = client.createPlayer(Editor.SUPERVISOR.getValue(), params);
-
-        assertEquals(response.getStatusCode(), 200, "Expected 200");
-
-        PlayerResponse actual = response.as(PlayerResponse.class);
-        assertNotNull(actual.getId(), "id should be present");
-        createdPlayerIds.add(actual.getId());
-
-        SoftAssert soft = new SoftAssert();
-        soft.assertEquals(actual.getAge(), params.getAge(), "age");
-        soft.assertEquals(actual.getGender(), params.getGender(), "gender");
-        soft.assertEquals(actual.getLogin(), params.getLogin(), "login");
-        soft.assertEquals(actual.getPassword(), params.getPassword(), "password");
-        soft.assertEquals(actual.getRole(), params.getRole(), "role");
-        soft.assertEquals(actual.getScreenName(), params.getScreenName(), "screenName");
-        soft.assertAll();
-    }
-
 }

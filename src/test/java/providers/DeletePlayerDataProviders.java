@@ -1,6 +1,6 @@
 package providers;
 
-import model.Editor;
+import model.enums.Editor;
 import org.testng.annotations.DataProvider;
 
 public final class DeletePlayerDataProviders {
