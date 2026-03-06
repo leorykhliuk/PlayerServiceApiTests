@@ -1,15 +1,16 @@
-package tests;
+package tests.updateplayer;
 
 import io.restassured.response.Response;
-import model.CreatePlayerParams;
-import model.Editor;
-import model.PlayerIdRequest;
-import model.PlayerResponse;
-import model.UpdatePlayerRequest;
+import model.enums.Editor;
+import model.request.CreatePlayerParams;
+import model.request.PlayerIdRequest;
+import model.request.UpdatePlayerRequest;
+import model.response.PlayerResponse;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import providers.UpdatePlayerDaraProvider;
+import tests.base.BaseApiTest;
 import utils.RandomDataUtil;
 
 import java.util.EnumMap;
@@ -39,7 +40,7 @@ public class UpdatePlayerTest extends BaseApiTest {
                     RandomDataUtil.randomScreenName()
             );
             Response createResponse = client.createPlayer(Editor.SUPERVISOR.getValue(), params);
-            Long id = createResponse.jsonPath().getObject("id", Long.class);
+            Long id = createResponse.as(PlayerResponse.class).getId();
             if (id != null) {
                 playerIdByRole.put(role, id);
             }
@@ -63,12 +64,12 @@ public class UpdatePlayerTest extends BaseApiTest {
         Long userId = playerIdByRole.get(Editor.USER);
         assertNotNull(userId, "Created user should exist");
 
-        UpdatePlayerRequest body = new UpdatePlayerRequest();
-        body.setAge("25");
-        body.setGender("female");
-        body.setLogin(RandomDataUtil.randomLogin());
-        body.setPassword(RandomDataUtil.randomPassword());
-        body.setScreenName(RandomDataUtil.randomScreenName());
+        UpdatePlayerRequest body = new UpdatePlayerRequest()
+                .setAge("25")
+                .setGender("female")
+                .setLogin(RandomDataUtil.randomLogin())
+                .setPassword(RandomDataUtil.randomPassword())
+                .setScreenName(RandomDataUtil.randomScreenName());
 
         Response updateResponse = client.updatePlayer(editor.getValue(), userId, body);
         assertEquals(updateResponse.getStatusCode(), 200,
@@ -87,8 +88,14 @@ public class UpdatePlayerTest extends BaseApiTest {
         assertEquals(actualFromUpdate, expectedFromUpdate, "Update response (no password) should match updated data");
 
         Response getResponse = client.getPlayerByPlayerId(new PlayerIdRequest(userId));
-        String actualPassword = getResponse.jsonPath().getObject("password", String.class);
-        assertEquals(actualPassword, body.getPassword(), "GET response password should match updated value");
+        assertEquals(getResponse.getStatusCode(), 200, "GET updated player should return 200");
+        PlayerResponse fromGet = getResponse.as(PlayerResponse.class);
+        assertEquals(fromGet.getAge(), body.getAge(), "GET age should match updated");
+        assertEquals(fromGet.getGender(), body.getGender(), "GET gender should match updated");
+        assertEquals(fromGet.getLogin(), body.getLogin(), "GET login should match updated");
+        assertEquals(fromGet.getPassword(), body.getPassword(), "GET password should match updated");
+        assertEquals(fromGet.getRole(), Editor.USER.getValue(), "GET role should be unchanged");
+        assertEquals(fromGet.getScreenName(), body.getScreenName(), "GET screenName should match updated");
     }
 
     @Test(description = "For each (editor, target): editor tries to change target's role to another; target role must stay unchanged",
@@ -99,15 +106,20 @@ public class UpdatePlayerTest extends BaseApiTest {
         assertNotNull(targetId, "Player with role " + targetRole + " should exist");
         String expectedRole = targetRole.getValue();
 
-        UpdatePlayerRequest body = new UpdatePlayerRequest();
-        body.setRole(targetRole.getRoleToTryForUpdateAttempt());
+        UpdatePlayerRequest body = new UpdatePlayerRequest()
+                .setRole(targetRole.getRoleToTryForUpdateAttempt());
         Response updateResponse = client.updatePlayer(editor.getValue(), targetId, body);
 
         assertEquals(updateResponse.getStatusCode(), 200);
 
-        String actualRole = updateResponse.jsonPath().getObject("role", String.class);
+        String actualRole = updateResponse.as(PlayerResponse.class).getRole();
         assertEquals(actualRole, expectedRole,
                 "Update response role must be unchanged (target " + targetRole + ", editor " + editor + ")");
+
+        Response getResponse = client.getPlayerByPlayerId(new PlayerIdRequest(targetId));
+        assertEquals(getResponse.getStatusCode(), 200, "GET player after update should return 200");
+        assertEquals(getResponse.as(PlayerResponse.class).getRole(), expectedRole,
+                "GET response role should still be unchanged (persisted)");
     }
 
     //BUG - update shouldn't have been happened, but it gives to update age to be out of rules.
@@ -115,10 +127,13 @@ public class UpdatePlayerTest extends BaseApiTest {
     public void updateUserAgeAsUserEditorReturns403() {
         Long userId = playerIdByRole.get(Editor.USER);
 
-        UpdatePlayerRequest body = new UpdatePlayerRequest();
-        body.setAge("15");
+        UpdatePlayerRequest body = new UpdatePlayerRequest().setAge("15");
         Response response = client.updatePlayer(Editor.USER.getValue(), userId, body);
 
         assertEquals(response.getStatusCode(), 403, "User updating user's age should return 403");
+
+        Response getResponse = client.getPlayerByPlayerId(new PlayerIdRequest(userId));
+        assertEquals(getResponse.getStatusCode(), 200, "GET player should still return 200 after rejected update");
+        assertEquals(getResponse.as(PlayerResponse.class).getAge(), "30", "GET age should be unchanged (update rejected)");
     }
 }

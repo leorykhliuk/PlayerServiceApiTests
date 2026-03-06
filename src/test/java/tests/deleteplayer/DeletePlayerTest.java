@@ -1,11 +1,13 @@
-package tests;
+package tests.deleteplayer;
 
 import io.restassured.response.Response;
-import model.CreatePlayerParams;
-import model.Editor;
-import model.PlayerIdRequest;
+import model.enums.Editor;
+import model.request.CreatePlayerParams;
+import model.request.PlayerIdRequest;
+import model.response.PlayerResponse;
 import org.testng.annotations.Test;
 import providers.DeletePlayerDataProviders;
+import tests.base.BaseApiTest;
 import utils.RandomDataUtil;
 
 import static org.testng.Assert.*;
@@ -47,14 +49,20 @@ public class DeletePlayerTest extends BaseApiTest {
         Response createResponse = client.createPlayer(Editor.SUPERVISOR.getValue(), createParams);
         assertNotNull(createResponse);
 
-        Long createdAdminId = createResponse.jsonPath().getObject("id", Long.class);
+        Long createdAdminId = createResponse.as(PlayerResponse.class).getId();
         assertNotNull(createdAdminId, "Expected created admin id");
 
         Response deleteResponse = client.deletePlayer(editor, new PlayerIdRequest(createdAdminId));
         assertEquals(deleteResponse.getStatusCode(), expectedStatus,
                 "Editor=" + editor + " expected " + expectedStatus + " got " + deleteResponse.getStatusCode());
 
-        if (expectedStatus == 403) {
+        if (expectedStatus == 204) {
+            Response getResponse = client.getPlayerByPlayerId(new PlayerIdRequest(createdAdminId));
+            assertTrue(getResponse.getStatusCode() != 200,
+                    "GET after successful delete should not return 200 (player should be gone)");
+        } else if (expectedStatus == 403) {
+            Response getResponse = client.getPlayerByPlayerId(new PlayerIdRequest(createdAdminId));
+            assertEquals(getResponse.getStatusCode(), 200, "GET should return 200 (admin still exists, delete was forbidden)");
             Response cleanupDelete = client.deletePlayer(Editor.SUPERVISOR.getValue(), new PlayerIdRequest(createdAdminId));
             assertNotNull(cleanupDelete);
             assertEquals(cleanupDelete.getStatusCode(), 204, "Supervisor cleanup should delete created admin");
@@ -79,7 +87,7 @@ public class DeletePlayerTest extends BaseApiTest {
         assertNotNull(createResponse);
         assertEquals(createResponse.getStatusCode(), 200, "Expected create user status 200");
 
-        Long createdUserId = createResponse.jsonPath().getObject("id", Long.class);
+        Long createdUserId = createResponse.as(PlayerResponse.class).getId();
         assertNotNull(createdUserId, "Expected created user id");
 
         Response deleteResponse = client.deletePlayer(editor, new PlayerIdRequest(createdUserId));
@@ -87,7 +95,11 @@ public class DeletePlayerTest extends BaseApiTest {
         assertEquals(deleteResponse.getStatusCode(), expectedStatus,
                 "Editor=" + editor + " expected " + expectedStatus + " got " + deleteResponse.getStatusCode());
 
-        if (deleteResponse.getStatusCode() != 204) {
+        if (expectedStatus == 204) {
+            Response getResponse = client.getPlayerByPlayerId(new PlayerIdRequest(createdUserId));
+            assertTrue(getResponse.getStatusCode() != 200,
+                    "GET after successful delete should not return 200 (player should be gone)");
+        } else {
             client.deletePlayer(Editor.SUPERVISOR.getValue(), new PlayerIdRequest(createdUserId));
         }
     }

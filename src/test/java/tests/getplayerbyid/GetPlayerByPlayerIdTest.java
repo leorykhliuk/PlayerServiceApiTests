@@ -1,13 +1,14 @@
-package tests;
+package tests.getplayerbyid;
 
 import io.restassured.response.Response;
-import model.CreatePlayerParams;
-import model.Editor;
-import model.PlayerIdRequest;
-import model.PlayerResponse;
+import model.enums.Editor;
+import model.request.CreatePlayerParams;
+import model.request.PlayerIdRequest;
+import model.response.PlayerResponse;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import tests.base.BaseApiTest;
 import utils.RandomDataUtil;
 
 import static org.testng.Assert.*;
@@ -32,9 +33,8 @@ public class GetPlayerByPlayerIdTest extends BaseApiTest {
         Response createResponse = client.createPlayer(Editor.SUPERVISOR.getValue(), createdAdminParams);
         assertNotNull(createResponse);
         assertEquals(createResponse.getStatusCode(), 200, "Expected create admin status 200");
-        Long id = createResponse.jsonPath().getObject("id", Long.class);
-        assertNotNull(id, "Expected created admin id");
-        createdAdminId = id;
+        createdAdminId = createResponse.as(PlayerResponse.class).getId();
+        assertNotNull(createdAdminId, "Expected created admin id");
         expectedAdminResponse = new PlayerResponse(
                 createdAdminId,
                 createdAdminParams.getAge(),
@@ -62,18 +62,5 @@ public class GetPlayerByPlayerIdTest extends BaseApiTest {
         PlayerResponse actual = getByIdResponse.as(PlayerResponse.class);
         assertNotNull(actual, "Expected non-null player object");
         assertEquals(actual, expectedAdminResponse, "Player object mismatch");
-    }
-
-    // BUG related to the age, when age <= 30 everything is fine
-    @Test(description = "Get player by id response time is less than 3 seconds")
-    public void getPlayerByIdResponseTimeLessThan3Seconds() {
-        Response getByIdResponse = client.getPlayerByPlayerId(new PlayerIdRequest(createdAdminId));
-
-        assertEquals(getByIdResponse.getStatusCode(), 200, "Expected get by id status 200");
-
-        long responseTimeMs = getByIdResponse.getTime();
-
-        assertTrue(responseTimeMs < 3000,
-                "Response time should be less than 3s, actual: " + responseTimeMs + " ms");
     }
 }

@@ -1,4 +1,4 @@
-package tests;
+package tests.base;
 
 import config.ApiConfig;
 import helpers.IPlayerApiClient;

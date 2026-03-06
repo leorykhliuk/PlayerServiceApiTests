@@ -1,6 +1,6 @@
 package providers;
 
-import model.Editor;
+import model.enums.Editor;
 import org.testng.annotations.DataProvider;
 
 public final class CreatePlayerDataProviders {
@@ -8,12 +8,18 @@ public final class CreatePlayerDataProviders {
     private CreatePlayerDataProviders() {
     }
 
-    @DataProvider(name = "editorAndExpectedStatus")
-    public static Object[][] editorAndExpectedStatus() {
+    /**
+     * Editor (who creates), player role (role of created player), expected HTTP status.
+     * When status is 200, test also verifies full response body matches request.
+     */
+    @DataProvider(name = "editorPlayerRoleAndExpectedStatus")
+    public static Object[][] editorPlayerRoleAndExpectedStatus() {
         return new Object[][]{
-                {Editor.SUPERVISOR.getValue(), 200},
-                {Editor.ADMIN.getValue(), 200},
-                {Editor.USER.getValue(), 403}
+                {Editor.SUPERVISOR.getValue(), "user", 200},
+                {Editor.SUPERVISOR.getValue(), "admin", 200},
+                {Editor.ADMIN.getValue(), "user", 200},
+                {Editor.ADMIN.getValue(), "admin", 200},
+                {Editor.USER.getValue(), "user", 403}
         };
     }
 

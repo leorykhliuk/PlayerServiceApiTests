@@ -1,12 +1,15 @@
-package tests;
+package tests.getallplayers;
 
 import io.restassured.response.Response;
-import model.CreatePlayerParams;
-import model.Editor;
-import model.PlayerIdRequest;
+import model.enums.Editor;
+import model.request.CreatePlayerParams;
+import model.request.PlayerIdRequest;
+import model.response.GetAllPlayersResponse;
+import model.response.PlayerResponse;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import tests.base.BaseApiTest;
 import utils.RandomDataUtil;
 
 import java.util.ArrayList;
@@ -27,7 +30,7 @@ public class GetAllPlayersTest extends BaseApiTest {
     public void createTwoPlayersWithSameScreenName() {
         CreatePlayerParams first = new CreatePlayerParams(
                 "30",
-                "MALE",
+                "male",
                 RandomDataUtil.randomLogin(),
                 RandomDataUtil.randomPassword(),
                 "user",
@@ -36,7 +39,7 @@ public class GetAllPlayersTest extends BaseApiTest {
 
         CreatePlayerParams second = new CreatePlayerParams(
                 "30",
-                "non-binary",
+                "female",
                 RandomDataUtil.randomLogin(),
                 RandomDataUtil.randomPassword(),
                 "user",
@@ -45,7 +48,7 @@ public class GetAllPlayersTest extends BaseApiTest {
 
         for (CreatePlayerParams params : List.of(first, second)) {
             Response createResponse = client.createPlayer(Editor.SUPERVISOR.getValue(), params);
-            createdPlayerIds.add(createResponse.jsonPath().getObject("id", Long.class));
+            createdPlayerIds.add(createResponse.as(PlayerResponse.class).getId());
         }
     }
 
@@ -56,30 +59,26 @@ public class GetAllPlayersTest extends BaseApiTest {
         }
     }
 
-    @Test(description = "Get all players returns non-empty list and response time is under 3s")
-    public void getAllPlayersReturnsNonEmptyListAndResponseTimeUnder3Seconds() {
+    @Test(description = "Get all players returns 200 and non-empty list")
+    public void getAllPlayersReturnsNonEmptyList() {
         Response response = client.getAllPlayers();
 
         assertEquals(response.getStatusCode(), 200, "Expected get all players status 200");
 
-        List<?> players = response.jsonPath().getList("players");
-
+        List<PlayerResponse> players = response.as(GetAllPlayersResponse.class).getPlayers();
+        assertNotNull(players, "Players list should not be null");
         assertFalse(players.isEmpty(), "Players list should not be empty");
-
-        long responseTimeMs = response.getTime();
-
-        assertTrue(responseTimeMs < 3000,
-                "Response time should be less than 3s, actual: " + responseTimeMs + " ms");
     }
 
     @Test(description = "All screenNames are unique: Set of screenNames has same size as players list")
     public void allScreenNamesAreUniqueSetSizeEqualsPlayerCount() {
         Response response = client.getAllPlayers();
 
-        List<?> players = response.jsonPath().getList("players");
+        List<PlayerResponse> players = response.as(GetAllPlayersResponse.class).getPlayers();
+        assertNotNull(players);
         assertFalse(players.isEmpty(), "Players list should not be empty");
 
-        List<String> screenNames = response.jsonPath().getList("players.screenName", String.class);
+        List<String> screenNames = players.stream().map(PlayerResponse::getScreenName).collect(Collectors.toList());
         Set<String> uniqueScreenNames = new HashSet<>(screenNames);
 
         assertEquals(uniqueScreenNames.size(), players.size(),
@@ -90,10 +89,11 @@ public class GetAllPlayersTest extends BaseApiTest {
     public void allPlayersHaveGenderMaleOrFemaleOnly() {
         Response response = client.getAllPlayers();
 
-        List<String> genders = response.jsonPath().getList("players.gender", String.class);
-        assertNotNull(genders, "Genders list should not be null");
+        List<PlayerResponse> players = response.as(GetAllPlayersResponse.class).getPlayers();
+        assertNotNull(players, "Players list should not be null");
 
-        List<String> invalid = genders.stream()
+        List<String> invalid = players.stream()
+                .map(PlayerResponse::getGender)
                 .filter(gender -> gender == null || (!"male".equals(gender) && !"female".equals(gender)))
                 .distinct()
                 .collect(Collectors.toList());

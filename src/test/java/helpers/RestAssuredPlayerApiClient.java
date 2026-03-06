@@ -1,57 +1,71 @@
 package helpers;
 
 import config.ApiConfig;
+import config.ApiEndpoint;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import model.CreatePlayerParams;
-import model.PlayerIdRequest;
-import model.UpdatePlayerRequest;
+import io.restassured.specification.RequestSpecification;
+import model.request.CreatePlayerParams;
+import model.request.PlayerIdRequest;
+import model.request.UpdatePlayerRequest;
+
+import static org.testng.Assert.assertTrue;
 
 public class RestAssuredPlayerApiClient implements IPlayerApiClient {
 
+    private static final long MAX_RESPONSE_TIME_MS = 3000;
+
+    private final RequestSpecification defaultSpec;
+
     public RestAssuredPlayerApiClient(ApiConfig config) {
-        RestAssured.baseURI = config.getBaseUrl();
+        this.defaultSpec = RestAssured.given()
+                .baseUri(config.getBaseUrl())
+                .contentType(ContentType.JSON);
+    }
+
+    private static Response verifyResponseTime(Response response) {
+        long timeMs = response.getTime();
+        assertTrue(timeMs < MAX_RESPONSE_TIME_MS,
+                "Response time should be under " + MAX_RESPONSE_TIME_MS + " ms, actual: " + timeMs + " ms");
+        return response;
     }
 
     @Override
     public Response createPlayer(String editor, CreatePlayerParams params) {
-        return RestAssured.given()
+        return verifyResponseTime(RestAssured.given(defaultSpec)
                 .pathParam("editor", editor)
                 .queryParams(params.toQueryMap())
-                .get("/player/create/{editor}");
+                .get(ApiEndpoint.CREATE_PLAYER.getPath()));
     }
 
     @Override
     public Response deletePlayer(String editor, PlayerIdRequest body) {
-        return RestAssured.given()
+        return verifyResponseTime(RestAssured.given(defaultSpec)
                 .pathParam("editor", editor)
-                .contentType(ContentType.JSON)
                 .body(body)
-                .delete("/player/delete/{editor}");
+                .delete(ApiEndpoint.DELETE_PLAYER.getPath()));
     }
 
     @Override
     public Response getPlayerByPlayerId(PlayerIdRequest body) {
-        return RestAssured.given()
-                .contentType(ContentType.JSON)
+        return verifyResponseTime(RestAssured.given(defaultSpec)
                 .body(body)
-                .post("/player/get");
+                .post(ApiEndpoint.GET_PLAYER_BY_ID.getPath()));
     }
 
     @Override
     public Response getAllPlayers() {
-        return RestAssured.given()
-                .get("/player/get/all");
+        return verifyResponseTime(RestAssured.given(defaultSpec)
+                .get(ApiEndpoint.GET_ALL_PLAYERS.getPath()));
     }
 
     @Override
     public Response updatePlayer(String editor, long userId, UpdatePlayerRequest body) {
-        return RestAssured.given()
+        return verifyResponseTime(RestAssured.given(defaultSpec)
                 .pathParam("editor", editor)
                 .pathParam("userId", userId)
-                .contentType(ContentType.JSON)
                 .body(body)
-                .patch("/player/update/{editor}/{userId}");
+                .patch(ApiEndpoint.UPDATE_PLAYER.getPath()));
     }
 }
