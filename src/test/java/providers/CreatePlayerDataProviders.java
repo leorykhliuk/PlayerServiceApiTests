@@ -8,10 +8,6 @@ public final class CreatePlayerDataProviders {
     private CreatePlayerDataProviders() {
     }
 
-    /**
-     * Editor (who creates), player role (role of created player), expected HTTP status.
-     * When status is 200, test also verifies full response body matches request.
-     */
     @DataProvider(name = "editorPlayerRoleAndExpectedStatus")
     public static Object[][] editorPlayerRoleAndExpectedStatus() {
         return new Object[][]{
