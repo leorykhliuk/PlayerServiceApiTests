@@ -38,14 +38,13 @@ public class DeletePlayerTest extends BaseApiTest {
             dataProviderClass = DeletePlayerDataProviders.class
     )
     public void deleteCreatedAdminByEachEditorReturnsExpectedStatus(String editor, int expectedStatus) {
-        CreatePlayerParams createParams = new CreatePlayerParams(
-                "30",
-                "male",
-                RandomDataUtil.randomLogin(),
-                RandomDataUtil.randomPassword(),
-                "admin",
-                RandomDataUtil.randomScreenName()
-        );
+        CreatePlayerParams createParams = new CreatePlayerParams()
+                .setAge("30")
+                .setGender("male")
+                .setLogin(RandomDataUtil.randomLogin())
+                .setPassword(RandomDataUtil.randomPassword())
+                .setRole("admin")
+                .setScreenName(RandomDataUtil.randomScreenName());
         Response createResponse = client.createPlayer(Editor.SUPERVISOR.getValue(), createParams);
         assertNotNull(createResponse);
 
@@ -75,14 +74,13 @@ public class DeletePlayerTest extends BaseApiTest {
             dataProviderClass = DeletePlayerDataProviders.class
     )
     public void deleteCreatedRegularUserByEachEditorReturns204(String editor, int expectedStatus) {
-        CreatePlayerParams createParams = new CreatePlayerParams(
-                "28",
-                "female",
-                RandomDataUtil.randomLogin(),
-                RandomDataUtil.randomPassword(),
-                "user",
-                RandomDataUtil.randomScreenName()
-        );
+        CreatePlayerParams createParams = new CreatePlayerParams()
+                .setAge("28")
+                .setGender("female")
+                .setLogin(RandomDataUtil.randomLogin())
+                .setPassword(RandomDataUtil.randomPassword())
+                .setRole("user")
+                .setScreenName(RandomDataUtil.randomScreenName());
         Response createResponse = client.createPlayer(Editor.SUPERVISOR.getValue(), createParams);
         assertNotNull(createResponse);
         assertEquals(createResponse.getStatusCode(), 200, "Expected create user status 200");

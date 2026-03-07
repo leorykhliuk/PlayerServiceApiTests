@@ -15,27 +15,18 @@ public class CreatePlayerParams {
     public CreatePlayerParams() {
     }
 
-    public CreatePlayerParams(String age, String gender, String login, String password, String role, String screenName) {
-        this.age = age;
-        this.gender = gender;
-        this.login = login;
-        this.password = password;
-        this.role = role;
-        this.screenName = screenName;
-    }
-
     public String getAge() { return age; }
-    public void setAge(String age) { this.age = age; }
+    public CreatePlayerParams setAge(String age) { this.age = age; return this; }
     public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
+    public CreatePlayerParams setGender(String gender) { this.gender = gender; return this; }
     public String getLogin() { return login; }
-    public void setLogin(String login) { this.login = login; }
+    public CreatePlayerParams setLogin(String login) { this.login = login; return this; }
     public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public CreatePlayerParams setPassword(String password) { this.password = password; return this; }
     public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public CreatePlayerParams setRole(String role) { this.role = role; return this; }
     public String getScreenName() { return screenName; }
-    public void setScreenName(String screenName) { this.screenName = screenName; }
+    public CreatePlayerParams setScreenName(String screenName) { this.screenName = screenName; return this; }
 
     public Map<String, String> toQueryMap() {
         Map<String, String> map = new LinkedHashMap<>();

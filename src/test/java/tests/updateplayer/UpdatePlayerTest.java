@@ -31,14 +31,13 @@ public class UpdatePlayerTest extends BaseApiTest {
         playerIdByRole = new EnumMap<>(Editor.class);
         playerIdByRole.put(Editor.SUPERVISOR, SUPERVISOR_ID);
         for (Editor role : new Editor[]{Editor.ADMIN, Editor.USER}) {
-            CreatePlayerParams params = new CreatePlayerParams(
-                    "30",
-                    "male",
-                    RandomDataUtil.randomLogin(),
-                    RandomDataUtil.randomPassword(),
-                    role.getValue(),
-                    RandomDataUtil.randomScreenName()
-            );
+            CreatePlayerParams params = new CreatePlayerParams()
+                    .setAge("30")
+                    .setGender("male")
+                    .setLogin(RandomDataUtil.randomLogin())
+                    .setPassword(RandomDataUtil.randomPassword())
+                    .setRole(role.getValue())
+                    .setScreenName(RandomDataUtil.randomScreenName());
             Response createResponse = client.createPlayer(Editor.SUPERVISOR.getValue(), params);
             Long id = createResponse.as(PlayerResponse.class).getId();
             if (id != null) {

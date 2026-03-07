@@ -36,14 +36,13 @@ public class CreatePlayerTest extends BaseApiTest {
             dataProviderClass = CreatePlayerDataProviders.class
     )
     public void createPlayerWithEditorAndRoleReturnsExpectedStatusAndBodyWhenSuccess(String editor, String playerRole, int expectedStatus) {
-        CreatePlayerParams params = new CreatePlayerParams(
-                "25",
-                "male",
-                RandomDataUtil.randomLogin(),
-                RandomDataUtil.randomPassword(),
-                playerRole,
-                RandomDataUtil.randomScreenName()
-        );
+        CreatePlayerParams params = new CreatePlayerParams()
+                .setAge("25")
+                .setGender("male")
+                .setLogin(RandomDataUtil.randomLogin())
+                .setPassword(RandomDataUtil.randomPassword())
+                .setRole(playerRole)
+                .setScreenName(RandomDataUtil.randomScreenName());
         Response response = client.createPlayer(editor, params);
 
         assertNotNull(response, "Response should not be null");
@@ -77,14 +76,13 @@ public class CreatePlayerTest extends BaseApiTest {
             dataProviderClass = CreatePlayerDataProviders.class
     )
     public void createPlayerWithBoundaryAgeReturnsExpectedStatus(String age, int expectedStatus) {
-        CreatePlayerParams params = new CreatePlayerParams(
-                age,
-                "male",
-                RandomDataUtil.randomLogin(),
-                RandomDataUtil.randomPassword(),
-                "user",
-                RandomDataUtil.randomScreenName()
-        );
+        CreatePlayerParams params = new CreatePlayerParams()
+                .setAge(age)
+                .setGender("male")
+                .setLogin(RandomDataUtil.randomLogin())
+                .setPassword(RandomDataUtil.randomPassword())
+                .setRole("user")
+                .setScreenName(RandomDataUtil.randomScreenName());
         Response response = client.createPlayer(Editor.SUPERVISOR.getValue(), params);
         assertNotNull(response);
         int actualStatus = response.getStatusCode();
@@ -108,14 +106,13 @@ public class CreatePlayerTest extends BaseApiTest {
             dataProviderClass = CreatePlayerDataProviders.class
     )
     public void createPlayerWithGenderReturnsExpectedStatus(String gender, int expectedStatus) {
-        CreatePlayerParams params = new CreatePlayerParams(
-                "30",
-                gender,
-                RandomDataUtil.randomLogin(),
-                RandomDataUtil.randomPassword(),
-                "user",
-                RandomDataUtil.randomScreenName()
-        );
+        CreatePlayerParams params = new CreatePlayerParams()
+                .setAge("30")
+                .setGender(gender)
+                .setLogin(RandomDataUtil.randomLogin())
+                .setPassword(RandomDataUtil.randomPassword())
+                .setRole("user")
+                .setScreenName(RandomDataUtil.randomScreenName());
         Response response = client.createPlayer(Editor.SUPERVISOR.getValue(), params);
         assertNotNull(response);
         int actualStatus = response.getStatusCode();

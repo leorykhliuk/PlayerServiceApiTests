@@ -1,9 +1,5 @@
 package config;
 
-/**
- * API path templates for the Player service.
- * Path parameters (e.g. {editor}, {userId}) are filled by RestAssured pathParam().
- */
 public enum ApiEndpoint {
 
     CREATE_PLAYER("/player/create/{editor}"),

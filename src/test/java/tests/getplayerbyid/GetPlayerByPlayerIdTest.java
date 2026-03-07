@@ -22,14 +22,13 @@ public class GetPlayerByPlayerIdTest extends BaseApiTest {
 
     @BeforeClass
     public void createAdminBeforeClass() {
-        createdAdminParams = new CreatePlayerParams(
-                "31",
-                "male",
-                RandomDataUtil.randomLogin(),
-                RandomDataUtil.randomPassword(),
-                "admin",
-                RandomDataUtil.randomScreenName()
-        );
+        createdAdminParams = new CreatePlayerParams()
+                .setAge("31")
+                .setGender("male")
+                .setLogin(RandomDataUtil.randomLogin())
+                .setPassword(RandomDataUtil.randomPassword())
+                .setRole("admin")
+                .setScreenName(RandomDataUtil.randomScreenName());
         Response createResponse = client.createPlayer(Editor.SUPERVISOR.getValue(), createdAdminParams);
         assertNotNull(createResponse);
         assertEquals(createResponse.getStatusCode(), 200, "Expected create admin status 200");

@@ -28,23 +28,21 @@ public class GetAllPlayersTest extends BaseApiTest {
 
     @BeforeClass
     public void createTwoPlayersWithSameScreenName() {
-        CreatePlayerParams first = new CreatePlayerParams(
-                "30",
-                "male",
-                RandomDataUtil.randomLogin(),
-                RandomDataUtil.randomPassword(),
-                "user",
-                SHARED_SCREEN_NAME
-        );
+        CreatePlayerParams first = new CreatePlayerParams()
+                .setAge("30")
+                .setGender("male")
+                .setLogin(RandomDataUtil.randomLogin())
+                .setPassword(RandomDataUtil.randomPassword())
+                .setRole("user")
+                .setScreenName(SHARED_SCREEN_NAME);
 
-        CreatePlayerParams second = new CreatePlayerParams(
-                "30",
-                "female",
-                RandomDataUtil.randomLogin(),
-                RandomDataUtil.randomPassword(),
-                "user",
-                SHARED_SCREEN_NAME
-        );
+        CreatePlayerParams second = new CreatePlayerParams()
+                .setAge("30")
+                .setGender("female")
+                .setLogin(RandomDataUtil.randomLogin())
+                .setPassword(RandomDataUtil.randomPassword())
+                .setRole("user")
+                .setScreenName(SHARED_SCREEN_NAME);
 
         for (CreatePlayerParams params : List.of(first, second)) {
             Response createResponse = client.createPlayer(Editor.SUPERVISOR.getValue(), params);
